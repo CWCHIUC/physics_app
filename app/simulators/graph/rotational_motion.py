@@ -1,174 +1,220 @@
-import math
-import random
-
-import numpy as np
 import pygame
-
 import pymunk
-import pymunk.batch
 import pymunk.pygame_util
+import matplotlib.pyplot as plt
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import threading
 
-random.seed(1)
-
-gravityStrength = 5.0e6
-planet_radius = 3
-center = pymunk.Vec2d(300, 300)
-screen_size = (600, 600)
-starting_planets = 100
-
-dt = 1 / 60.0
-
-
-def planet_gravity(body, gravity, damping, dt):
-    # Gravitational acceleration is proportional to the inverse square of
-    # distance, and directed toward the origin. The central planet is assumed
-    # to be massive enough that it affects the satellites but not vice versa.
-    p = body.position
-    sq_dist = p.get_dist_sqrd(center)
-    g = (p - center) * -gravityStrength / (sq_dist * math.sqrt(sq_dist))
-
-    # body.velocity += g * dt # setting velocity directly like would be slower
-    pymunk.Body.update_velocity(body, g, damping, dt)
-
-
-def batched_planet_gravity(draw_buffer, dt, update_buffer):
-    # get current position and velocity
-    arr = np.frombuffer(draw_buffer.float_buf())
-    # pick every 4th item to position.x etc.
-    p_x = arr[::4]
-    p_y = arr[1::4]
-    v_x = arr[2::4]
-    v_y = arr[3::4]
-
-    sq_dist = (p_x - center.x) ** 2 + (p_y - center.y) ** 2
-
-    scaled_dist_sq_dist = -gravityStrength / (sq_dist * np.sqrt(sq_dist))
-    g_x = (p_x - center.x) * scaled_dist_sq_dist
-    g_y = (p_y - center.y) * scaled_dist_sq_dist
-    # at this point we have calculated 'g' as in planet_graivity(...)
-
-    # This is the simpliced update_velocity function from planet_gravity(...)
-    # (since space.gravity == 0 and space.damping == 1)
-    new_v_x = v_x + g_x * dt
-    new_v_y = v_y + g_y * dt
-
-    # make resulting array by altering x and y values for the velocity
-    v_arr = np.ravel([new_v_x, new_v_y], "F")
-    update_buffer.set_float_buf(v_arr.tobytes())
-
-
-def add_planet(space):
-    body = pymunk.Body()
-    while True:
-        # Loop to filter out planets too close to the center star
-        body.position = pymunk.Vec2d(
-            random.randint(-150, 750), random.randint(-150, 750)
-        )
-        r = body.position.get_distance(center)
-        if r > 40:
-            break
-
-    body.velocity_func = planet_gravity
-
-    # Set the planets's velocity to put it into a circular orbit from its
-    # starting position.
-    v = math.sqrt(gravityStrength / r) / r
-    body.velocity = (body.position - center).perpendicular() * v
-    # Set the planets's angular velocity to match its orbital period and
-    # align its initial angle with its position.
-    body.angular_velocity = v
-    body.angle = math.atan2(body.position.y, body.position.x)
-
-    circle = pymunk.Circle(body, planet_radius)
-    circle.mass = 1
-    circle.friction = 0.7
-    circle.elasticity = 0
-    space.add(body, circle)
-
-
+# Initialize Pygame
 pygame.init()
-screen = pygame.display.set_mode(screen_size)
+screen = pygame.display.set_mode((600, 600))
 clock = pygame.time.Clock()
-font = pygame.font.Font(None, 20)
 
+# Pymunk space setup
 space = pymunk.Space()
+draw_options = pymunk.pygame_util.DrawOptions(screen)
 
-for x in range(starting_planets):
-    add_planet(space)
+# Create a wheel
+wheel_radius = 50
+wheel_mass = 1
+wheel_position = (300, 300)
+wheel = None
+angular_velocities = []
+angular_accelerations = []
+forces = []
+times = []
+positions = []
 
-use_batch_draw = False
-use_batch_update = False
-draw_buffer = pymunk.batch.Buffer()
-update_buffer = pymunk.batch.Buffer()
-planet_color = pygame.Color("white")
+# Constants
+angular_velocity = -2.0  # radians per second (clockwise)
+elapsed_time = 0.0  # Initialize elapsed time
 
-while True:
+def create_wheel(space, position, radius, mass):
+    global wheel
+    if wheel is not None:
+        space.remove(wheel, wheel.body)
+    body = pymunk.Body()
+    body.position = position
+    inertia = pymunk.moment_for_circle(mass, 0, radius)  # Calculate moment of inertia
+    shape = pymunk.Circle(body, radius)
+    shape.mass = mass
+    shape.friction = 0.5
+    space.add(body, shape)
+    body.angular_velocity = angular_velocity
+    wheel = shape
+
+# Function to update physics and track data
+def update_physics_and_track_data():
+    global elapsed_time
+
+    # Update physics
+    space.step(1/60.0)
+
+    # Track elapsed time
+    elapsed_time += 1/60.0
+
+    # Calculate torque (tau) and force (f = MR^2)
+    if wheel is not None:
+        moment_of_inertia = wheel.mass * wheel.radius ** 2
+        torque = moment_of_inertia * wheel.body.angular_velocity
+        force = torque / wheel.radius
+
+        # Update angular velocity, acceleration, and force
+        angular_velocity = wheel.body.angular_velocity
+        angular_acceleration = force / moment_of_inertia
+        angular_velocities.append(angular_velocity)
+        angular_accelerations.append(angular_acceleration)
+        forces.append(force)
+
+        # Track marker position
+        center = wheel.body.position
+        marker_position = center + pymunk.Vec2d(wheel_radius, 0).rotated(wheel.body.angle)
+        positions.append(marker_position)
+
+        # Track time
+        times.append(elapsed_time)
+
+# Create initial wheel
+create_wheel(space, wheel_position, wheel_radius, wheel_mass)
+
+# Function to create the plot window
+def create_plot_window():
+    root = tk.Tk()
+    root.title("Graph")
+
+    fig, ax1 = plt.subplots(figsize=(8, 6))
+    canvas = FigureCanvasTkAgg(fig, master=root)
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+    data_options = ["Time", "Angular Velocity", "Position", "Angular Acceleration", "Force"]
+
+    x_var = tk.StringVar(value=data_options[0])
+    y_var = tk.StringVar(value=data_options[1])
+
+    def update_plot_wrapper():
+        x_label = x_var.get().lower()
+        y_label = y_var.get().lower()
+
+        # Select data based on user selection
+        if x_label == "time":
+            x_data = times
+        elif x_label == "angular velocity":
+            x_data = angular_velocities
+        elif x_label == "position":
+            x_data = [pos.x for pos in positions]
+        elif x_label == "angular acceleration":
+            x_data = angular_accelerations
+        elif x_label == "force":
+            x_data = forces
+
+        if y_label == "time":
+            y_data = times
+        elif y_label == "angular velocity":
+            y_data = angular_velocities
+        elif y_label == "position":
+            y_data = [pos.y for pos in positions]
+        elif y_label == "angular acceleration":
+            y_data = angular_accelerations
+        elif y_label == "force":
+            y_data = forces
+
+        if len(x_data) != len(y_data):
+            return  # Ensure x_data and y_data have the same length
+
+        ax1.clear()
+        ax1.plot(x_data, y_data)
+        ax1.set_title(f"{y_var.get()} vs {x_var.get()}")
+        ax1.set_xlabel(x_var.get())
+        ax1.set_ylabel(y_var.get())
+        ax1.grid(True)
+        canvas.draw()
+
+    # OptionMenus for selecting X-axis and Y-axis variables
+    tk.Label(root, text="X-Axis:").pack(side=tk.LEFT)
+    tk.OptionMenu(root, x_var, *data_options, command=lambda _: update_plot_wrapper()).pack(side=tk.LEFT)
+
+    tk.Label(root, text="Y-Axis:").pack(side=tk.LEFT)
+    tk.OptionMenu(root, y_var, *data_options, command=lambda _: update_plot_wrapper()).pack(side=tk.LEFT)
+
+    # Function to update plot periodically
+    def update_plot_periodically():
+        while True:
+            update_plot_wrapper()
+            root.update()  # Update the Tkinter window
+            pygame.time.wait(1000)  # Update every 1 second to reduce lag
+
+    # Start thread to update plot periodically
+    plot_thread = threading.Thread(target=update_plot_periodically)
+    plot_thread.start()
+
+    root.mainloop()
+
+# Function to create the main control panel window
+def create_main_window():
+    main_root = tk.Tk()
+    main_root.title("Control Panel")
+
+    def update_radius(value):
+        global wheel_radius
+        wheel_radius = int(value)
+        create_wheel(space, wheel_position, wheel_radius, wheel_mass)
+
+    radius_slider = tk.Scale(main_root, label="Wheel Radius", orient=tk.HORIZONTAL, from_=10, to=100, length=200, command=lambda value: update_radius(value))
+    radius_slider.pack()
+
+    def update_mass(value):
+        global wheel_mass
+        wheel_mass = float(value)
+        create_wheel(space, wheel_position, wheel_radius, wheel_mass)
+
+    mass_slider = tk.Scale(main_root, label="Wheel Mass", orient=tk.HORIZONTAL, from_=0.1, to=5.0, resolution=0.1, length=200, command=lambda value: update_mass(value))
+    mass_slider.pack()
+
+    def on_button_click():
+        plot_data_thread = threading.Thread(target=create_plot_window)
+        plot_data_thread.start()
+
+    button = tk.Button(main_root, text="Open Graph", command=on_button_click)
+    button.pack(side=tk.TOP)
+
+    main_root.mainloop()
+
+# Start the control panel window in the main thread
+if __name__ == "__main__":
+    control_panel_thread = threading.Thread(target=create_main_window)
+    control_panel_thread.start()
+
+# Main Pygame loop
+running = True
+while running:
     for event in pygame.event.get():
-        if (
-            event.type == pygame.QUIT
-            or event.type == pygame.KEYDOWN
-            and event.key == pygame.K_ESCAPE
-        ):
-            exit()
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_a:
-            for x in range(100):
-                add_planet(space)
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-            pygame.image.save(screen, "planet_batch.png")
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_d:
-            use_batch_draw = not use_batch_draw
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_u:
-            use_batch_update = not use_batch_update
+        if event.type == pygame.QUIT:
+            running = False
 
-            if use_batch_update:
-                for b in space.bodies:
-                    b.velocity_func = pymunk.Body.update_velocity
-            else:
-                for b in space.bodies:
-                    b.velocity_func = planet_gravity
+    # Clear screen
+    screen.fill((255, 255, 255))
 
-    screen.fill(pygame.Color("black"))
+    # Update physics and track data
+    update_physics_and_track_data()
 
-    if use_batch_draw or use_batch_update:
-        # Reuse the position / velocity buffer for both drawing and calculating velocity
-        draw_buffer.clear()
-        pymunk.batch.get_space_bodies(
-            space,
-            pymunk.batch.BodyFields.POSITION | pymunk.batch.BodyFields.VELOCITY,
-            draw_buffer,
-        )
+    # Draw objects
+    space.debug_draw(draw_options)
 
-    if use_batch_draw:
-        ps = list(memoryview(draw_buffer.float_buf()).cast("d"))
-        for idx in range(0, len(ps), 4):
-            pygame.draw.circle(
-                screen, planet_color, (ps[idx], ps[idx + 1]), planet_radius
-            )
-    else:
-        for b in space.bodies:
-            pygame.draw.circle(screen, planet_color, b.position, planet_radius)
+    # Draw a marker on the rotating wheel
+    if wheel is not None:
+        center = wheel.body.position
+        marker_position = center + pymunk.Vec2d(wheel_radius, 0).rotated(wheel.body.angle)
+        pygame.draw.line(screen, (255, 0, 0), center, marker_position, 2)
+        pygame.draw.circle(screen, (255, 0, 0), (int(marker_position.x), int(marker_position.y)), 5)
 
-    # 'Star' in the center of screen
-    pygame.draw.circle(screen, pygame.Color("yellow"), center, 10)
+    # Display elapsed time on the screen
+    font = pygame.font.Font(None, 36)
+    text_surface = font.render(f'Time: {elapsed_time:.2f} seconds', True, (0, 0, 0))
+    screen.blit(text_surface, (10, 10))
 
-    if use_batch_update:
-        batched_planet_gravity(draw_buffer, dt, update_buffer)
-        pymunk.batch.set_space_bodies(
-            space, pymunk.batch.BodyFields.VELOCITY, update_buffer
-        )
-
-    space.step(dt)
-
-    help = "Press a to add planets, d to toggle batched drawing and u to toggle batched updates."
-    draw_mode = "batch" if use_batch_draw else "loop"
-    update_mode = "batch" if use_batch_update else "callback"
-    status = (
-        f"Planets: {len(space.bodies)}. Draw mode: {draw_mode}. Update: {update_mode}"
-    )
-
-    screen.blit(font.render(status, True, pygame.Color("orange")), (5, 25))
-    screen.blit(font.render(help, True, pygame.Color("orange")), (5, 5))
-
+    # Update display
     pygame.display.flip()
-    clock.tick(1 / dt)
-    pygame.display.set_caption(f"fps: {clock.get_fps():.2f} {status}")
+    clock.tick(60)
+
+pygame.quit()
