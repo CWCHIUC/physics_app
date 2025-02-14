@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{url_for('static', filename='test.css')}}">
+</head>
+<body>
+    <div class="nav">
+        <div class="logo">
+            <img id="logo" src="{{url_for('static',filename='/images/simulabs1.png')}}" height="56">
+            <p id="brand">SIMULABS</p>
+        </div>
+        <div class="chain">
+            <div class="doc"><p class="link">Docs</p></div>
+            <div class="doc"><p class="link">Updates</p></div>
+            <div class="doc"><p class="link">Blog</p></div>
+        </div>
+        <div class="form">
+            <form method="POST" action="/logout">
+                <button type="submit">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="content">
+            <div class="text">
+                <h1>Your physics labs.</h1>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
