@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://www.desmos.com/api/v1.9/calculator.js?apiKey=c01a540dc67b49c48c70e59c9da3cb6b"></script>
+    <link rel="stylesheet" href="{{url_for('static',filename='/dist/css/output.css')}}" />
+</head>
+<body class="h-full">
+    <div class="grid h-full grid-cols-[1fr,80px]">
+        <div class="error group flex flex-col">
+            <div
+                id="error"
+                class="hidden bg-red-500 text-black group-[.error]:block"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="inline size-6"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                </svg>
+                <span>Could not connect, ensure WebSocketServer is running and reload</span>
+            </div>
+            <div id="calculator" class="flex-grow"></div>
+            <div>
+                <button type="button">Screenshot</button>
+                <button type="button">Popout</button>
+            </div>
+        </div>
+        <div class="[clip-path:_rect(9999px 0px 9999px 9999px)] group grid place-content-center">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="size-12 text-stone-600"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5"
+                />
+            </svg>
+            <div class="fixed right-0 top-0 h-full min-w-96 translate-x-full p-2.5 transition-transform group-hover:translate-x-0 has-[:focus-within]:translate-x-0 has-[:hover]:translate-x-0">
+                <div id="controls" class="h-full w-full rounded-lg bg-white p-4 shadow-xl">
+                    <!--BEGIN app defined options-->
+                    <div id="opt__velocity">
+                        <label for="velocity">Velocity:</label>
+                        <input id="velocity" class="rounded-lg" type="number" value="0" />
+                    </div>
+                    <div id="opt__mass1">
+                        <label for="mass1">Mass 1:</label>
+                        <input id="mass1" class="rounded-lg" type="number" value="1" />
+                    </div>
+                    <div id="opt__mass2">
+                        <label for="mass2">Mass 2:</label>
+                        <input id="mass2" class="rounded-lg" type="number" value="2" />
+                    </div>
+                    <!--END app defined options-->
+                    <div id="opt__xaxis">
+                        <label for="xAxisValue">X-axis value:</label>
+                        <select id="xAxisValue" class="axisValue rounded-lg">
+                            <option value="time">Time</option>
+                            <option value="Position Block 1">Position Block </option>
+                            
+                            <option value="Velocity Block 1">Velocity Block <option>
+                           
+                            <option value="Acceleration Block 1">θ</option>
+                            
+                        </select>
+                    </div>
+                    <div id="opt__yaxis">
+                        <label for="yAxisValue">Y-axis value:</label>
+                        <select id="yAxisValue" class="axisValue rounded-lg">
+                            <option value="time">Time</option>
+                            <option value="Position Block 1">Position Block 1</option>
+                            
+                            <option value="Velocity Block 1">Velocity Block 1</option>
+                            
+                            <option value="Acceleration Block 1">θ</option>
+                            
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='sim.js') }}"></script>
+</body>
+</html>
