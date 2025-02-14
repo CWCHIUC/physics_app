@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}"> -->
+    <link rel="stylesheet" href="{{url_for('static',filename='index.css')}}">
+
+</head>
+<body>
+    <div class="container"> 
+        <div class="buttons">
+            <form action="{{ url_for('simulator_with_graphs') }}" method="post">
+                <button class="button" type="submit" class="button">Simulator with Graphs</button>
+            </form>
+            <form action="{{ url_for('simulator_without_graphs') }}" method="post">
+                <button type="submit" class="button">Simulator without Graphs</button>
+            </form>
+            <!-- <form action="https://linktr.ee/physio_lab" target="_blank">
+                <button type="button" class="button">About</button>
+            </form> -->
+            <a class="button" style="padding: 20px 0;" href="https://linktr.ee/physio_lab">About</a>
+        </div>
+    </div>
+</body>
+</html>
+
+
