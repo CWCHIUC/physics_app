@@ -3,44 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulator with Graphs</title>
+    <title>Simulator Without Graphs</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Simulator with Graphs</h1>
+        <h1>Simulator Without Graphs</h1>
 
         <div class="buttons">
             <form action="{{ url_for('run_simulation') }}" method="post">
-                <input type="hidden" name="simulation_type" value="single_object">
-                <button class="button" type="submit">Single Object Simulation</button>
+                <input type="hidden" name="simulation_type" value="shapes">
+                <button class="button" type="submit">Drawable Shapes Simulation</button>
             </form>
             <form action="{{ url_for('run_simulation') }}" method="post">
-                <input type="hidden" name="simulation_type" value="atwoods">
-                <button class="button" type="submit">Atwoods Simulation</button>
-            </form>
-            <form action="{{ url_for('run_simulation') }}" method="post">
-                <input type="hidden" name="simulation_type" value="pendulum">
-                <button class="button" type="submit">Pendulum Simulation</button>
-            </form>
-            <form action="{{ url_for('run_simulation') }}" method="post">
-                <input type="hidden" name="simulation_type" value="planetary_motion">
-                <button class="button" type="submit">Planetary Motion Simulation</button>
-            </form>
-            <form action="{{ url_for('run_simulation') }}" method="post">
-                <input type="hidden" name="simulation_type" value="elastic_collision">
-                <button class="button" type="submit">Elastic Collisions Simulation</button>
-            </form>
-            <form action="{{ url_for('run_simulation') }}" method="post">
-                <input type="hidden" name="simulation_type" value="inelastic_collision">
-                <button class="button" type="submit">Inelastic Collisions Simulation</button>
-            </form>
-            <form action="{{ url_for('run_simulation') }}" method="post">
-                <input type="hidden" name="simulation_type" value="rotational_motion">
-                <button class="button" type="submit">Rotational Motion Simulation</button>
+                <input type="hidden" name="simulation_type" value="camera">
+                <button class="button" type="submit">Camera Simulation</button>
             </form>
         </div>
     </div>
 </body>
 </html>
+
 
