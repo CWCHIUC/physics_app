@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script type="module" src="{{url_for('static',filename='login.js')}}"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='login.css')}}">
+</head>
+<body>
+    <!-- <form id="login-form">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Email" required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Password" required>
+
+        <button id="submit" type="submit">Login</button>
+        
+        <div class="form">
+            <p>Don't have an account? <a href="register.html">Sign up here</a></p>
+        </div>
+    </form> -->
+    <div class="logoheader">
+        <img id="logo" src="{{url_for('static',filename='/images/simulabs1.png')}}" height="56">
+        <p id="brand">SIMULABS</p>
+    </div>
+
+    <div class="container">
+        <div class="header">
+          <h2 class="mb-4 mt-4 text-center">Welcome Back</h2>
+        </div>
+  
+        <form id="login-form">
+          <div class="mb-3">
+            <input type="text" class="form-control" id="email" name="username" placeholder="Username" required>
+          </div>
+          <div>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+          </div>
+          <div id="error-message" style="display: none; color: red; font-size: 17px;"></div>
+          <button type="submit" class="btn continue submit">Log In</button>
+        </form>
+  
+        <!-- <div class="sep-section">
+          <div class="sep"></div>
+          <div class="sep-text">OR</div>
+          <div class="sep"></div>
+        </div>
+    
+        <button class="googlebtn btn" id="googlebtn" type="submit">
+          <div class="signbtn">
+            <img src="google.png">
+            <span id="google-txt">Continue with Google</span>
+          </div>
+        </button> -->
+      </div>
+
+      <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
+        <p id="bottom_text">PARTNERING WITH</p>
+        <img src="{{ url_for('static', filename='/images/desmos.png')}}" height="25" style="display: block; margin: auto;">
+      </div>
+</body>
+</html>
